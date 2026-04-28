@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: synapse-society
+    env: docker
+    plan: free
+    autoDeploy: true
+    envVars:
+      - key: SYNAPSE_DISABLE_TRANSFORMER
+        value: "1"
+      - key: SCENARIO
+        value: survival
+      - key: AGENT_COUNT
+        value: "4"

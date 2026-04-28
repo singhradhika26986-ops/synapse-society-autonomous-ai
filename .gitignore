@@ -1,0 +1,16 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+venv/
+env/
+logs/
+data/runs/
+production_stdout.log
+production_stderr.log
+web_app_stdout.log
+web_app_stderr.log
+web_app_8002_stdout.log
+web_app_8002_stderr.log
+.DS_Store
