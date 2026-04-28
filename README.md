@@ -2,6 +2,10 @@
 
 Production-ready Python multi-agent AI simulation with explainable decisions, scenario control, persistence, replay, and a live FastAPI web interface.
 
+Repository:
+
+[https://github.com/singhradhika26986-ops/synapse-society-autonomous-ai](https://github.com/singhradhika26986-ops/synapse-society-autonomous-ai)
+
 ## What It Does
 
 Synapse Society simulates 3-5 autonomous agents in a 10x10 grid world. Agents compete and cooperate while managing hunger, thirst, energy, trust, risk, resources, and long-term survival.
@@ -133,6 +137,10 @@ http://localhost:8000
 
 Render deployment is configured with `render.yaml`.
 
+One-click Render blueprint setup:
+
+[https://render.com/deploy?repo=https://github.com/singhradhika26986-ops/synapse-society-autonomous-ai](https://render.com/deploy?repo=https://github.com/singhradhika26986-ops/synapse-society-autonomous-ai)
+
 1. Push this repository to GitHub.
 2. Create a new Render Blueprint or Web Service.
 3. Select Docker environment.
@@ -152,6 +160,8 @@ web: uvicorn production_app:app --host 0.0.0.0 --port ${PORT:-8000}
 ```
 
 After deployment, the platform provides the public URL.
+
+Important: `127.0.0.1` links only work on the machine where the app is running. For a public link that anyone can open anytime, deploy this repository on Render or Railway and use the generated app URL.
 
 ## NLP Mode
 
