@@ -37,6 +37,67 @@ Core capabilities:
 - `main.py` - pygame/headless simulation runner.
 - `ui.py` - pygame visualization.
 
+## How To Run
+
+Python compatibility:
+
+- Base CLI simulation: Python `3.9+`
+- Optional rich extras like `pygame`, `faiss`, and transformer downloads are best on Python `3.9-3.13`
+- On Python `3.14`, the project still runs because it falls back to pure-Python memory and headless mode if optional packages are unavailable
+
+One-command demo:
+
+```powershell
+python main.py
+```
+
+What this does:
+
+- runs a finite simulation demo
+- prints visible step-by-step logs
+- writes structured logs to `logs/simulation_log.jsonl`
+- finishes cleanly without hanging forever
+
+Useful demo commands:
+
+```powershell
+python main.py --scenario cooperation --steps 30
+python main.py --ui pygame --live
+python main.py --ui headless --steps 40 --seed 42
+python web_app.py --port 8002
+```
+
+Install optional dependencies:
+
+```powershell
+pip install -r requirements.txt
+```
+
+If `pygame`, `faiss`, or transformer packages are missing, the core simulation still runs with built-in fallbacks.
+
+Minimal browser demo:
+
+```powershell
+python web_app.py --port 8002
+```
+
+Then open:
+
+[http://127.0.0.1:8002](http://127.0.0.1:8002)
+
+Optional FastAPI demo:
+
+```powershell
+pip install -r requirements-prod.txt
+python -m uvicorn production_app:app --host 127.0.0.1 --port 8010
+```
+
+Alternative deployment-friendly import path:
+
+```powershell
+python -m uvicorn app:app --host 127.0.0.1 --port 8010
+```
+
 ## Run Locally
 
 Recommended production app:

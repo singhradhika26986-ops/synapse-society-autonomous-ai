@@ -4,7 +4,10 @@ from dataclasses import dataclass
 from collections import defaultdict
 from typing import Dict, List, Optional
 
-import numpy as np
+try:
+    import numpy as np
+except Exception:  # pragma: no cover - pure Python fallback for lightweight local runs
+    np = None
 
 try:
     import faiss
@@ -32,8 +35,8 @@ class EmbeddingModel:
     def __init__(self, dimension=MEMORY_DIMENSION):
         self.dimension = dimension
 
-    def encode(self, text: str) -> np.ndarray:
-        vector = np.zeros(self.dimension, dtype="float32")
+    def encode(self, text: str):
+        vector = [0.0] * self.dimension
         tokens = [token.strip(".,!?;:()[]{}").lower() for token in text.split()]
         for token in tokens:
             if not token:
@@ -42,26 +45,34 @@ class EmbeddingModel:
             index = int.from_bytes(digest[:4], "little") % self.dimension
             sign = 1.0 if digest[4] % 2 == 0 else -1.0
             vector[index] += sign
-        norm = np.linalg.norm(vector)
+        norm = math.sqrt(sum(value * value for value in vector))
         if norm > 0:
-            vector /= norm
-        return vector.reshape(1, -1)
+            vector = [value / norm for value in vector]
+        if np is not None:
+            return np.array(vector, dtype="float32").reshape(1, -1)
+        return [vector]
 
 
 class SimpleVectorIndex:
     def __init__(self, dimension):
         self.dimension = dimension
-        self.vectors = np.empty((0, dimension), dtype="float32")
+        self.vectors = []
 
     def add(self, vector):
-        self.vectors = np.vstack([self.vectors, vector.astype("float32")])
+        row = vector[0].tolist() if np is not None else list(vector[0])
+        self.vectors.append(row)
 
     def search(self, vector, top_k):
         if len(self.vectors) == 0:
-            return np.array([[]], dtype="float32"), np.array([[]], dtype="int64")
-        distances = np.linalg.norm(self.vectors - vector, axis=1)
-        order = np.argsort(distances)[:top_k]
-        return distances[order].reshape(1, -1), order.reshape(1, -1)
+            return [[]], [[]]
+        query = vector[0].tolist() if np is not None else list(vector[0])
+        scored = []
+        for index, candidate in enumerate(self.vectors):
+            distance = math.sqrt(sum((left - right) ** 2 for left, right in zip(candidate, query)))
+            scored.append((distance, index))
+        scored.sort(key=lambda item: item[0])
+        trimmed = scored[:top_k]
+        return [[distance for distance, _ in trimmed]], [[index for _, index in trimmed]]
 
 
 class AgentMemory:
@@ -69,7 +80,7 @@ class AgentMemory:
         self.dimension = dimension
         self.embedder = EmbeddingModel(dimension)
         self.items: List[MemoryItem] = []
-        self.index = faiss.IndexFlatL2(dimension) if faiss else SimpleVectorIndex(dimension)
+        self.index = faiss.IndexFlatL2(dimension) if faiss and np is not None else SimpleVectorIndex(dimension)
         self.relationships = defaultdict(
             lambda: {"trust": 0.0, "positive": 0, "negative": 0, "interactions": 0, "last_sentiment": 0.0}
         )
