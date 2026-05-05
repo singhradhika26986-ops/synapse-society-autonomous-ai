@@ -7,7 +7,3 @@ services:
     envVars:
       - key: SYNAPSE_DISABLE_TRANSFORMER
         value: "1"
-      - key: SCENARIO
-        value: survival
-      - key: AGENT_COUNT
-        value: "4"

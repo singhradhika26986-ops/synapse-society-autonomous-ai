@@ -149,6 +149,42 @@ class Simulation:
                 print(f"- Step {entry['timestep']}: A{entry['speaker_id']} -> A{entry['listener_id']}: {entry['message']}")
         print(f"\nStructured logs: logs/simulation_log.jsonl")
 
+    def build_summary(self):
+        agents = []
+        for agent in self.environment.agents:
+            relationships = agent.memory.relationship_summary()
+            strongest = max(
+                relationships.items(),
+                key=lambda item: abs(item[1]["trust"]),
+                default=("none", {"trust": 0.0, "status": "neutral"}),
+            )
+            agents.append(
+                {
+                    "agent_id": agent.id,
+                    "personality": agent.personality,
+                    "specialization": agent.specialization,
+                    "position": agent.position,
+                    "energy": agent.energy,
+                    "hunger": agent.hunger,
+                    "thirst": agent.thirst,
+                    "last_action": agent.last_action,
+                    "reward": round(agent.total_reward, 2),
+                    "strongest_relation": {
+                        "agent_id": strongest[0],
+                        "trust": strongest[1]["trust"],
+                        "status": strongest[1]["status"],
+                    },
+                }
+            )
+        return {
+            "scenario": self.environment.scenario_name,
+            "steps": self.environment.timestep,
+            "agent_count": len(self.environment.agents),
+            "agents": agents,
+            "recent_messages": list(self.conversations.messages[-5:]),
+            "metrics": self.metrics.snapshot(),
+        }
+
     def _serialize_decision(self, decision):
         clean = dict(decision)
         clean["state_key"] = list(clean["state_key"])
@@ -190,3 +226,45 @@ if __name__ == "__main__":
         scenario=args.scenario,
         log_level=args.log_level,
     ).run()
+
+
+def run_simulation_demo(steps=30, agent_count=DEFAULT_AGENT_COUNT, seed=None, scenario="survival", log_level="WARNING"):
+    """Run a bounded headless simulation and return rich step-by-step results."""
+    simulation = Simulation(
+        agent_count=agent_count,
+        max_steps=max(1, int(steps)),
+        seed=seed,
+        ui_mode="headless",
+        scenario=scenario,
+        log_level=log_level,
+    )
+    step_history = []
+    while simulation.environment.timestep < simulation.max_steps:
+        simulation.step()
+        last_conversation = simulation.conversations.messages[-1] if simulation.conversations.messages else None
+        step_history.append(
+            {
+                "step": simulation.environment.timestep,
+                "agents": [
+                    {
+                        "agent_id": agent.id,
+                        "action": agent.last_action,
+                        "decision_scores": dict(agent.last_decision_scores),
+                        "mood": agent.mood,
+                        "position": agent.position,
+                        "energy": agent.energy,
+                        "hunger": agent.hunger,
+                        "thirst": agent.thirst,
+                        "message": agent.last_message,
+                    }
+                    for agent in simulation.environment.agents
+                ],
+                "latest_conversation": last_conversation,
+            }
+        )
+    return {
+        "steps_requested": steps,
+        "steps_completed": simulation.environment.timestep,
+        "summary": simulation.build_summary(),
+        "step_history": step_history,
+    }
